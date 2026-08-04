@@ -39,27 +39,10 @@ def generate_from_prompt(prompt: str, aspect_ratio: str = "1:1", output_dir: Pat
 
     try:
         client = InferenceClient(api_key=api_key)
-        image = client.text_to_image(prompt, model=model)
-
-        # Crop to 16:9 without distortion
-        if image.size != (1280, 720):
-            img_w, img_h = image.size
-            target_ratio = 16 / 9
-            current_ratio = img_w / img_h
-
-            if current_ratio > target_ratio:
-                # Too wide - crop sides
-                new_w = int(img_h * target_ratio)
-                left = (img_w - new_w) // 2
-                image = image.crop((left, 0, left + new_w, img_h))
-            elif current_ratio < target_ratio:
-                # Too tall - crop top/bottom
-                new_h = int(img_w / target_ratio)
-                top = (img_h - new_h) // 2
-                image = image.crop((0, top, img_w, top + new_h))
-
-            # Resize to target 16:9 resolution
-            image = image.resize((1280, 720), Image.Resampling.LANCZOS)
+        if aspect_ratio == "16:9":
+            image = client.text_to_image(prompt, model=model, width=1280, height=720)
+        else:
+            image = client.text_to_image(prompt, model=model)
 
         out_dir = output_dir or (_resolve_output_dir() or Path("output"))
         out_dir = out_dir / "_asset_images"
