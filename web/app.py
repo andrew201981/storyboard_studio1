@@ -515,15 +515,16 @@ def script_editor(project_id: str):
 
     if request.method == "POST":
         uploaded = request.files.get("project_json")
-        try:
-            raw = uploaded.read()
-            data = json.loads(raw.decode("utf-8"))
-            project = validate_dict(data)
-            save_project(project, project_path)
-            markdown = rebuild_markdown(project)
-            saved = str(project_path)
-        except Exception as exc:
-            error = f"JSON error: {exc}"
+        if uploaded and uploaded.filename.endswith(".json"):
+            try:
+                raw = uploaded.read()
+                data = json.loads(raw.decode("utf-8"))
+                project = validate_dict(data)
+                save_project(project, project_path)
+                markdown = rebuild_markdown(project)
+                saved = str(project_path)
+            except Exception as exc:
+                error = f"JSON error: {exc}"
         else:
             markdown = request.form.get("markdown", "")
             try:
@@ -973,6 +974,31 @@ def assets_autofill(project_id: str):
     return {"ok": True}
 
 
+def _generate_shot_image(shot_id: str, shot: object, style: str) -> str | None:
+    try:
+        from backends.hf_image import generate_from_prompt
+    except Exception:
+        return None
+
+    title = ""
+    prompt = ""
+    if isinstance(shot, dict):
+        title = shot.get("title", "") or ""
+        prompt = shot.get("prompt", "") or ""
+    else:
+        title = getattr(shot, "title", "") or ""
+        prompt = getattr(shot, "prompt", "") or ""
+
+    shot_prompt = f"{prompt or title}. Style: {style}. Cinematic storyboard frame, 16:9, high detail."
+    out_dir = OUTPUT_DIR / "_asset_images"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    dest = out_dir / f"{shot_id}.png"
+    image_path = generate_from_prompt(shot_prompt, "16:9", output_dir=out_dir, dest=dest)
+    if image_path:
+        return f"/static/asset_images/{shot_id}.png"
+    return None
+
+
 def _fake_asset_image(asset_id: str, name: str) -> str | None:
     try:
         from PIL import Image, ImageDraw
@@ -1164,7 +1190,7 @@ def shot_generate(project_id: str, shot_id: str):
         for shot in scene.get("shots", []):
             if shot.get("id") == shot_id:
                 shot["status"] = ShotStatus.image_generated.value
-                shot["image_url"] = f"/static/placeholder/{shot_id}.png"
+                shot["image_url"] = _generate_shot_image(shot_id, shot, project.globalStyle)
                 updated = True
                 break
         if updated:
