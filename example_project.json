@@ -1,0 +1,252 @@
+{
+  "version": "1.0",
+  "projectTitle": "EL REENCUENTRO DE LOS AMANTES",
+  "globalStyle": "Realistic",
+  "script": {
+    "scenes": [
+      {
+        "id": "1",
+        "slugline": "EXT. PARQUE CENTRAL - DÍA",
+        "description": "El sol de la tarde se filtra entre las copas de los robles antiguos. Thalasso corre por el sendero principal. Xylia aparece desde el extremo opuesto de la gran plaza circular. Se encuentran frente a la fuente de piedra.",
+        "time_of_day": "Día"
+      },
+      {
+        "id": "2",
+        "slugline": "INT. APARTAMENTO DE XYLIA - NOCHE",
+        "description": "La habitación está en penumbra, iluminada por velas y una lámpara de pie. Xylia y Thalasso están sentados en el sofá de terciopelo. Afuera empieza a llover.",
+        "time_of_day": "Noche"
+      }
+    ],
+    "dialogues": [
+      {"id": "d1", "scene_id": "1", "character": "THALASSO", "text": "Dime que no estoy soñando."},
+      {"id": "d2", "scene_id": "1", "character": "XYLIA", "text": "Si es un sueño, no quiero despertar nunca."},
+      {"id": "d3", "scene_id": "2", "character": "XYLIA", "text": "Me costó creer que eras tú cuando te vi entre la gente."},
+      {"id": "d4", "scene_id": "2", "character": "THALASSO", "text": "No iba a permitir que pasara un día más sin encontrarte. Crucé la frontera al amanecer."},
+      {"id": "d5", "scene_id": "2", "character": "XYLIA", "text": "¿Te quedarás esta vez?"},
+      {"id": "d6", "scene_id": "2", "character": "THALASSO", "text": "No hay ningún lugar en el mundo al que prefiera ir. Mi viaje termina aquí, Xylia."}
+    ]
+  },
+  "assets": [
+    {
+      "id": "6b3b0041",
+      "type": "character",
+      "name": "Thalasso",
+      "include_in_prompt": true,
+      "physical": "Mediterranean man in his early 30s, lean athletic build, olive skin, thick wavy raven-black hair chin-length, dense short beard, piercing amber eyes.",
+      "clothing": "Unbuttoned navy canvas field jacket over charcoal gray t-shirt, slim-fit dark indigo denim jeans, weathered brown leather combat boots, silver band on right ring finger.",
+      "backstory": "Political refugee who spent months traveling across borders to reunite with his partner.",
+      "image_url": null
+    },
+    {
+      "id": "a6f51a64",
+      "type": "character",
+      "name": "Xylia",
+      "include_in_prompt": true,
+      "physical": "Woman of East African descent, late 20s, tall graceful frame, deep bronze skin, shoulder-length micro-braids with small gold clips, large expressive mahogany eyes.",
+      "clothing": "Flowing floor-length emerald green silk wrap dress with floral brocade pattern, gold strappy leather sandals, delicate gold hoop earrings, thin gold chain with sun pendant.",
+      "backstory": "Established artist waiting in uncertainty for Thalasso's safety.",
+      "image_url": null
+    },
+    {
+      "id": "e0324972",
+      "type": "location",
+      "name": "Parque Central",
+      "include_in_prompt": true,
+      "prompt": "Expansive public park with rolling hills of golden-green grass shaded by towering ancient oak trees, paved walking paths, distant city skyline, wrought-iron perimeter fencing.",
+      "time_of_day": "Late afternoon",
+      "image_url": null
+    },
+    {
+      "id": "43d9dbec",
+      "type": "prop",
+      "name": "Fuente De Piedra",
+      "include_in_prompt": true,
+      "prompt": "Three-tiered circular fountain carved from weathered gray limestone, deep green moss in crevices, four snarling lion heads in oxidized bronze weeping water into a wide lichen-stained pool.",
+      "image_url": null
+    },
+    {
+      "id": "cf7e3846",
+      "type": "location",
+      "name": "Apartamento De Xylia",
+      "include_in_prompt": true,
+      "prompt": "400 sq ft studio with cream plaster walls, dark hardwood floors, ornate Persian rug, deep navy velvet sofa, low oak coffee table, vintage mahogany record player, candles and brass floor lamp casting amber glow.",
+      "time_of_day": "Late night",
+      "image_url": null
+    }
+  ],
+  "storyboard": {
+    "scenes": [
+      {
+        "sceneId": "s1",
+        "sceneNumber": "01",
+        "sceneTitle": "Ext. Parque Central - Día",
+        "shots": [
+          {
+            "id": "sh01",
+            "shotNumber": "01",
+            "title": "Sunlight in the Park",
+            "prompt": "Wide view of Parque Central, golden afternoon sunlight filtering through dense leaves of ancient oak trees, grass glows warm emerald, distant cityscape blurred, peaceful serene atmosphere.",
+            "camera": "slow pan",
+            "linked_asset_ids": ["e0324972"],
+            "audio_description": "Soft ambient soundscape of wind rustling leaves and distant muffled city traffic. Birds chirp occasionally.",
+            "transition_prompt": "Slow cinematic pan from peaceful park into Thalasso's determined run.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh02",
+            "shotNumber": "02",
+            "title": "Thalasso's Determined Run",
+            "prompt": "Thalasso running down the main path, jacket billowing behind him, face shows intense determination, chest heaving with every breath, dappled shadows and light.",
+            "camera": "tracking shot side",
+            "linked_asset_ids": ["6b3b0041", "e0324972"],
+            "audio_description": "Rhythmic sound of heavy breathing mixed with rapid footsteps on gravel.",
+            "transition_prompt": "Tracking shot follows Thalasso, then cuts to Xylia emerging from the crowd.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh03",
+            "shotNumber": "03",
+            "title": "Xylia Joins the Chase",
+            "prompt": "From far side of plaza, Xylia emerges from crowd, vibrant emerald dress catches light, expression shifts from shock to joy, sprinting toward Thalasso.",
+            "camera": "wide to zoom in",
+            "linked_asset_ids": ["a6f51a64", "e0324972"],
+            "audio_description": "Background chatter punctuated by Xylia's sharp intake of breath and light taps of shoes.",
+            "transition_prompt": "Xylia running across plaza, moving toward Thalasso.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh04",
+            "shotNumber": "04",
+            "title": "The Reunion Spin",
+            "prompt": "Thalasso and Xylia collide in front of stone fountain. Thalasso lifts Xylia off ground, spinning in circle. Emerald dress flares against gray stone.",
+            "camera": "360 tracking",
+            "linked_asset_ids": ["6b3b0041", "a6f51a64", "43d9dbec"],
+            "audio_description": "Splashing water blends with laughter and triumphant breathing, music reaches joyful crescendo.",
+            "transition_prompt": "Couple spinning, slowing down into intimate close-up embrace.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh05",
+            "shotNumber": "05",
+            "title": "A Shared Moment",
+            "prompt": "Thalasso sets Xylia down slowly, keeps arms locked around her waist. Xylia reaches up to cradle his face. Eyes glistening with happy tears, inches apart, world soft-focus blur behind them.",
+            "camera": "static close-up",
+            "linked_asset_ids": ["6b3b0041", "a6f51a64"],
+            "audio_description": "Music softens to gentle piano. Thalasso whispers about dreaming, Xylia's tender response.",
+            "transition_prompt": "Intimate close-up into passionate kiss silhouetted against sunset.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh06",
+            "shotNumber": "06",
+            "title": "The Timeless Kiss",
+            "prompt": "Deep passionate kiss in front of stone fountain, sun setting casting long shadows and golden halo around their silhouette, distant tourists as unidentifiable shapes.",
+            "camera": "pull back high angle",
+            "linked_asset_ids": ["6b3b0041", "a6f51a64", "43d9dbec"],
+            "audio_description": "Ambient noise fades, swelling romantic score, fountain water rhythmic hypnotic background.",
+            "transition_prompt": "",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          }
+        ]
+      },
+      {
+        "sceneId": "s2",
+        "sceneNumber": "02",
+        "sceneTitle": "Int. Apartamento De Xylia - Noche",
+        "shots": [
+          {
+            "id": "sh07",
+            "shotNumber": "01",
+            "title": "Atmosphere of the Apartment",
+            "prompt": "Dimly lit interior, warm glow of candles and floor lamp casting long shadows, vintage record player spinning vinyl in corner.",
+            "camera": "slow pan",
+            "linked_asset_ids": ["cf7e3846"],
+            "audio_description": "Soft melancholic jazz melody, faint rhythmic crackle of vinyl.",
+            "transition_prompt": "Pan across room toward seating area where couple sits.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh08",
+            "shotNumber": "02",
+            "title": "Intimate Moment on the Sofa",
+            "prompt": "Xylia and Thalasso on plush velvet sofa, Xylia legs tucked close, Thalasso holds steaming tea cup, faces highlighted by flickering candlelight.",
+            "camera": "medium shot",
+            "linked_asset_ids": ["a6f51a64", "6b3b0041", "cf7e3846"],
+            "audio_description": "Jazz continues at lower volume, subtle sound of steam rising from tea cup.",
+            "transition_prompt": "Medium shot shifts to close-up on Xylia's face.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh09",
+            "shotNumber": "03",
+            "title": "Xylia's Realization",
+            "prompt": "Close-up on Xylia's face, mix of relief and disbelief, warm lamp light catches reflection in her eyes.",
+            "camera": "static close-up",
+            "linked_asset_ids": ["a6f51a64"],
+            "audio_description": "Xylia speaks softly about not believing it was him.",
+            "transition_prompt": "Close-up Xylia shifts to Thalasso's intense face.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh10",
+            "shotNumber": "04",
+            "title": "Thalasso's Promise",
+            "prompt": "Thalasso looks back with intensity and sincerity, sets tea cup down on low coffee table, reaches toward her, background blurred.",
+            "camera": "slight push-in",
+            "linked_asset_ids": ["6b3b0041", "cf7e3846"],
+            "audio_description": "Thalasso speaks firmly about crossing the border at dawn.",
+            "transition_prompt": "Push-in Thalasso, pull back to shared embrace silhouette.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh11",
+            "shotNumber": "05",
+            "title": "The Shared Embrace",
+            "prompt": "Xylia leans head on Thalasso's shoulder, he wraps protective arm around her, silhouettes against warm lamplight.",
+            "camera": "slow zoom out",
+            "linked_asset_ids": ["a6f51a64", "6b3b0041"],
+            "audio_description": "Rain patters softly against window. Thalasso whispers his journey ends here.",
+            "transition_prompt": "Zoom out embrace shifts to raindrops on window pane.",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          },
+          {
+            "id": "sh12",
+            "shotNumber": "06",
+            "title": "Rain Against the Glass",
+            "prompt": "Window pane with rain droplets streaking down, dark city barely visible through glass, warm candlelight reflection inside.",
+            "camera": "static detail",
+            "linked_asset_ids": ["cf7e3846"],
+            "audio_description": "Jazz fades, rain intensifies, record player reaches end with soft click.",
+            "transition_prompt": "",
+            "status": "pending",
+            "image_url": null,
+            "clip_url": null
+          }
+        ]
+      }
+    ]
+  },
+  "render": null
+}

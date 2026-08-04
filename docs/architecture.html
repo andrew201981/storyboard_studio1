@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Storyboard Studio V1 — Arquitectura</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    padding: 40px;
+  }
+  h1 { color: #58a6ff; margin-bottom: 8px; }
+  h2 { color: #8b949e; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin: 32px 0 12px; border-bottom: 1px solid #21262d; padding-bottom: 6px; }
+  .subtitle { color: #8b949e; margin-bottom: 32px; }
+
+  /* Pipeline */
+  .pipeline {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .pipe-step {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 12px 16px;
+    flex: 1;
+    min-width: 140px;
+    text-align: center;
+    position: relative;
+  }
+  .pipe-step .num {
+    display: inline-block;
+    background: #58a6ff;
+    color: #0d1117;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+  }
+  .pipe-step .label { font-size: 13px; font-weight: 600; }
+  .pipe-step .sub { font-size: 11px; color: #8b949e; margin-top: 4px; }
+  .pipe-arrow { color: #30363d; font-size: 20px; align-self: center; }
+
+  /* Data model */
+  .model {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .model .key { color: #79c0ff; }
+  .model .str { color: #a5d6ff; }
+  .model .comment { color: #8b949e; font-style: italic; }
+  .model .type { color: #ff7b72; }
+  .model .bracket { color: #8b949e; }
+
+  /* File tree */
+  .tree { font-family: 'Fira Code', 'Consolas', monospace; font-size: 13px; line-height: 1.8; }
+  .tree .dir { color: #58a6ff; font-weight: 600; }
+  .tree .file { color: #c9d1d9; }
+  .tree .comment { color: #484f58; }
+
+  /* Errors table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: #8b949e; font-weight: 600; padding: 8px 12px; border-bottom: 1px solid #30363d; }
+  td { padding: 8px 12px; border-bottom: 1px solid #21262d; }
+  td:first-child { color: #ff7b72; font-weight: 600; }
+
+  .tag {
+    display: inline-block;
+    background: #1f6feb33;
+    color: #58a6ff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎬 Storyboard Studio V1</h1>
+<p class="subtitle">Arquitectura · Data Model · Pipeline · Mejoras sobre el original</p>
+
+<h2>📦 Estructura del proyecto</h2>
+<div class="tree">
+<span class="dir">storyboard_studio1/</span><br>
+├── <span class="dir">cli.py</span> <span class="comment"># Entry point — comandos</span><br>
+├── <span class="dir">config.yaml</span> <span class="comment"># API keys, estilos, defaults</span><br>
+├── <span class="dir">schemas/</span><br>
+│   ├── <span class="file">project.py</span> <span class="comment"># Modelos Pydantic</span><br>
+│   └── <span class="file">validator.py</span> <span class="comment"># Validación de JSON</span><br>
+├── <span class="dir">pipeline/</span><br>
+│   ├── <span class="file">script_parser.py</span> <span class="comment"># Markdown → scenes/dialogues</span><br>
+│   ├── <span class="file">asset_gen.py</span> <span class="comment"># Characters/locations/props</span><br>
+│   ├── <span class="file">image_gen.py</span> <span class="comment"># Frames por shot</span><br>
+│   ├── <span class="file">transition_gen.py</span> <span class="comment"># img_i → img_i+1 video clips</span><br>
+│   ├── <span class="file">scene_render.py</span> <span class="comment"># Concatenar clips de escena</span><br>
+│   ├── <span class="file">tts_gen.py</span> <span class="comment"># Narración por escena</span><br>
+│   └── <span class="file">final_mux.py</span> <span class="comment"># Video + audio → final.mp4</span><br>
+├── <span class="dir">backends/</span><br>
+│   ├── <span class="file">fal.py</span> <span class="comment"># FAL.ai image/video gen</span><br>
+│   ├── <span class="file">pollinations.py</span> <span class="comment"># Pollinations fallback</span><br>
+│   ├── <span class="file">openrouter.py</span> <span class="comment"># LLM para prompts/guion</span><br>
+│   └── <span class="file">tts_provider.py</span> <span class="comment"># Edge/OpenAI TTS</span><br>
+├── <span class="dir">utils/</span><br>
+│   ├── <span class="file">ffmpeg.py</span> <span class="comment"># Wrappers ffmpeg</span><br>
+│   ├── <span class="file">prompt_builder.py</span> <span class="comment"># Componer prompts con assets</span><br>
+│   └── <span class="file">ids.py</span> <span class="comment"># UUIDs cortos</span><br>
+├── <span class="dir">output/</span><br>
+│   ├── <span class="dir">{project_id}/</span><br>
+│   │   ├── <span class="dir">assets/</span> <span class="comment"># personajes, locaciones, props</span><br>
+│   │   ├── <span class="dir">frames/</span> <span class="comment"># imágenes por shot</span><br>
+│   │   ├── <span class="dir">clips/</span> <span class="comment"># videos de transición</span><br>
+│   │   ├── <span class="dir">scenes/</span> <span class="comment"># videos por escena (sin audio)</span><br>
+│   │   ├── <span class="dir">audio/</span> <span class="comment"># narración TTS</span><br>
+│   │   └── <span class="file">final.mp4</span><br>
+└── <span class="dir">tests/</span> <span class="comment"># unit tests</span><br>
+</div>
+
+<h2>🔁 Pipeline completo V1</h2>
+<div class="pipeline">
+  <div class="pipe-step">
+    <div class="num">1</div>
+    <div class="label">Script</div>
+    <div class="sub">Markdown → scenes + dialogues</div>
+  </div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">
+    <div class="num">2</div>
+    <div class="label">Assets</div>
+    <div class="sub">Characters / Locations / Props</div>
+  </div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">
+    <div class="num">3</div>
+    <div class="label">Frames</div>
+    <div class="sub">1 imagen por shot</div>
+  </div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">
+    <div class="num">4</div>
+    <div class="label">Transitions</div>
+    <div class="sub">img_i → img_i+1 video clips</div>
+  </div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">
+    <div class="num">5</div>
+    <div class="label">Scene Video</div>
+    <div class="sub">Concatenar clips + crossfade</div>
+  </div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">
+    <div class="num">6</div>
+    <div class="label">TTS Narration</div>
+    <div class="sub">Audio por escena</div>
+  </div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">
+    <div class="num">7</div>
+    <div class="label">Final Mux</div>
+    <div class="sub">Video + Audio → final.mp4</div>
+  </div>
+</div>
+
+<h2>📐 Data Model — project.schema.json</h2>
+<div class="model">
+{
+  <span class="key">"$schema"</span>: <span class="str">"https://json-schema.org/draft/2020-12/schema"</span>,<br>
+  <span class="key">"type"</span>: <span class="str">"object"</span>,<br>
+  <span class="key">"required"</span>: [<span class="str">"version"</span>, <span class="str">"projectTitle"</span>, <span class="str">"globalStyle"</span>, <span class="str">"script"</span>, <span class="str">"assets"</span>, <span class="str">"storyboard"</span>],<br>
+  <span class="key">"properties"</span>: {<br>
+&nbsp;&nbsp;<span class="key">"version"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },<br>
+&nbsp;&nbsp;<span class="key">"projectTitle"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },<br>
+&nbsp;&nbsp;<span class="key">"globalStyle"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span>, <span class="key">"default"</span>: <span class="str">"Realistic"</span> },<br>
+<br>
+&nbsp;&nbsp;<span class="comment">// ── SCRIPT ───────────────────────────────</span><br>
+&nbsp;&nbsp;<span class="key">"script"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"type"</span>: <span class="str">"object"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"required"</span>: [<span class="str">"scenes"</span>, <span class="str">"dialogues"</span>],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"properties"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"scenes"</span>: { <span class="key">"type"</span>: <span class="str">"array"</span>, <span class="key">"items"</span>: <span class="str">"Scene"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"dialogues"</span>: { <span class="key">"type"</span>: <span class="str">"array"</span>, <span class="key">"items"</span>: <span class="str">"Dialogue"</span> }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;},<br>
+<br>
+&nbsp;&nbsp;<span class="comment">// ── ASSETS ───────────────────────────────</span><br>
+&nbsp;&nbsp;<span class="key">"assets"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"type"</span>: <span class="str">"array"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"items"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"oneOf"</span>: [<span class="str">"CharacterAsset"</span>, <span class="str">"LocationAsset"</span>, <span class="str">"PropAsset"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;},<br>
+<br>
+&nbsp;&nbsp;<span class="comment">// ── STORYBOARD ──────────────────────────</span><br>
+&nbsp;&nbsp;<span class="key">"storyboard"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"type"</span>: <span class="str">"object"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"required"</span>: [<span class="str">"scenes"</span>],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"properties"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"scenes"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"type"</span>: <span class="str">"array"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"items"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"required"</span>: [<span class="str">"sceneId"</span>, <span class="str">"sceneNumber"</span>, <span class="str">"title"</span>, <span class="str">"shots"</span>],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"properties"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"sceneId"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span>, <span class="key">"format"</span>: <span class="str">"uuid"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"sceneNumber"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"sceneTitle"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"shots"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"type"</span>: <span class="str">"array"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"items"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"required"</span>: [<span class="str">"id"</span>, <span class="str">"shotNumber"</span>, <span class="str">"title"</span>, <span class="str">"prompt"</span>, <span class="str">"status"</span>],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"properties"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"id"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"shotNumber"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"title"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"prompt"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"camera"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> }, <span class="comment">// "pan left" | "zoom in" | "static" | ...</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"linkedAssetIds"</span>: { <span class="key">"type"</span>: <span class="str">"array"</span>, <span class="key">"items"</span>: {<span class="key">"type"</span>: <span class="str">"string"</span>} },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"audioDescription"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> }, <span class="comment">// prompt TTS para este shot</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"transitionPrompt"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> }, <span class="comment">// prompt para clip shot_i → shot_i+1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"status"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"enum"</span>: [<span class="str">"pending"</span>, <span class="str">"image_generated"</span>, <span class="str">"clip_generated"</span>, <span class="str">"scene_rendered"</span>, <span class="str">"failed"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"imageUrl"</span>: { <span class="key">"type"</span>: [<span class="str">"string"</span>, <span class="str">"null"</span>] },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"clipUrl"</span>: { <span class="key">"type"</span>: [<span class="str">"string"</span>, <span class="str">"null"</span>] }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;},<br>
+<br>
+&nbsp;&nbsp;<span class="comment">// ── RENDER ──────────────────────────────</span><br>
+&nbsp;&nbsp;<span class="key">"render"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"type"</span>: <span class="str">"object"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"properties"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"outputPath"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"duration"</span>: { <span="key">"type"</span>: <span class="str">"number"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"fps"</span>: { <span class="key">"type"</span>: <span class="str">"integer"</span>, <span class="key">"default"</span>: <span class="str">24</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"resolution"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span>, <span class="key">"default"</span>: <span class="str">"1920x1080"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"createdAt"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span>, <span class="key">"format"</span>: <span class="str">"date-time"</span> }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+  }<br>
+}
+</div>
+
+<h2>🔧 Modelos Pydantic (schemas/project.py)</h2>
+<div class="model">
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field<br>
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum<br>
+<span class="keyword">from</span> uuid <span class="keyword">import</span> uuid4<br>
+<br>
+<span class="keyword">class</span> <span class="type">ShotStatus</span>(str, Enum):<br>
+&nbsp;&nbsp;pending = <span class="str">"pending"</span><br>
+&nbsp;&nbsp;image_generated = <span class="str">"image_generated"</span><br>
+&nbsp;&nbsp;clip_generated = <span class="str">"clip_generated"</span><br>
+&nbsp;&nbsp;scene_rendered = <span class="str">"scene_rendered"</span><br>
+&nbsp;&nbsp;failed = <span class="str">"failed"</span><br>
+<br>
+<span class="keyword">class</span> <span class="type">BaseAsset</span>(BaseModel):<br>
+&nbsp;&nbsp;id: str = Field(default_factory=<span class="keyword">lambda</span>: str(uuid4()))<br>
+&nbsp;&nbsp;name: str<br>
+&nbsp;&nbsp;include_in_prompt: bool = True<br>
+&nbsp;&nbsp;image_url: str | None = None<br>
+<br>
+<span class="keyword">class</span> <span class="type">CharacterAsset</span>(BaseAsset):<br>
+&nbsp;&nbsp;type: str = <span class="str">"character"</span><br>
+&nbsp;&nbsp;physical: str<br>
+&nbsp;&nbsp;clothing: str<br>
+&nbsp;&nbsp;backstory: str<br>
+<br>
+<span class="keyword">class</span> <span class="type">LocationAsset</span>(BaseAsset):<br>
+&nbsp;&nbsp;type: str = <span class="str">"location"</span><br>
+&nbsp;&nbsp;prompt: str<br>
+&nbsp;&nbsp;time_of_day: str<br>
+<br>
+<span class="keyword">class</span> <span class="type">PropAsset</span>(BaseAsset):<br>
+&nbsp;&nbsp;type: str = <span class="str">"prop"</span><br>
+&nbsp;&nbsp;prompt: str<br>
+<br>
+<span class="keyword">class</span> <span class="type">Shot</span>(BaseModel):<br>
+&nbsp;&nbsp;id: str = Field(default_factory=<span class="keyword">lambda</span>: str(uuid4()))<br>
+&nbsp;&nbsp;shotNumber: str<br>
+&nbsp;&nbsp;title: str<br>
+&nbsp;&nbsp;prompt: str<br>
+&nbsp;&nbsp;camera: str = <span class="str">"static"</span><br>
+&nbsp;&nbsp;linked_asset_ids: list[str] = []<br>
+&nbsp;&nbsp;audio_description: str = <span class="str">""</span><br>
+&nbsp;&nbsp;transition_prompt: str = <span class="str">""</span>  <span class="comment"># prompt para shot_i → shot_i+1</span><br>
+&nbsp;&nbsp;status: ShotStatus = ShotStatus.pending<br>
+&nbsp;&nbsp;image_url: str | None = None<br>
+&nbsp;&nbsp;clip_url: str | None = None<br>
+<br>
+<span class="keyword">class</span> <span class="type">StoryboardScene</span>(BaseModel):<br>
+&nbsp;&nbsp;sceneId: str<br>
+&nbsp;&nbsp;sceneNumber: str<br>
+&nbsp;&nbsp;sceneTitle: str<br>
+&nbsp;&nbsp;shots: list[Shot] = []<br>
+<br>
+<span class="keyword">class</span> <span class="type">ScriptScene</span>(BaseModel):<br>
+&nbsp;&nbsp;id: str = Field(default_factory=<span class="keyword">lambda</span>: str(uuid4()))<br>
+&nbsp;&nbsp;slugline: str<br>
+&nbsp;&nbsp;description: str<br>
+&nbsp;&nbsp;time_of_day: str<br>
+<br>
+<span class="keyword">class</span> <span class="type">Dialogue</span>(BaseModel):<br>
+&nbsp;&nbsp;id: str = Field(default_factory=<span class="keyword">lambda</span>: str(uuid4()))<br>
+&nbsp;&nbsp;scene_id: str<br>
+&nbsp;&nbsp;character: str<br>
+&nbsp;&nbsp;text: str<br>
+&nbsp;&nbsp;emotion: str = <span class="str">"neutral"</span><br>
+<br>
+<span class="keyword">class</span> <span class="type">RenderConfig</span>(BaseModel):<br>
+&nbsp;&nbsp;output_path: str = <span class="str">""</span><br>
+&nbsp;&nbsp;duration: float = 0.0<br>
+&nbsp;&nbsp;fps: int = 24<br>
+&nbsp;&nbsp;resolution: str = <span class="str">"1920x1080"</span><br>
+&nbsp;&nbsp;created_at: str = <span class="str">""</span><br>
+<br>
+<span class="keyword">class</span> <span class="type">StoryboardProject</span>(BaseModel):<br>
+&nbsp;&nbsp;version: str = <span class="str">"1.0"</span><br>
+&nbsp;&nbsp;projectTitle: str<br>
+&nbsp;&nbsp;globalStyle: str = <span class="str">"Realistic"</span><br>
+&nbsp;&nbsp;script: <span class="type">dict</span>  <span class="comment"># {"scenes": [...], "dialogues": [...]}</span><br>
+&nbsp;&nbsp;assets: list[BaseAsset] = []<br>
+&nbsp;&nbsp;storyboard: dict = {}  <span class="comment"># {"scenes": [StoryboardScene, ...]}</span><br>
+&nbsp;&nbsp;render: RenderConfig | None = None<br>
+</div>
+
+<h2>🐛 Problemas del original — Soluciones V1</h2>
+<table>
+<tr><th>#</th><th>Problema original</th><th>Solución V1</th></tr>
+<tr>
+  <td>1</td>
+  <td>Guion en Markdown con HTML comments frágiles</td>
+  <td>Parser robusto → scenes[] + dialogues[] estructurados</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Sin TTS ni narración</td>
+  <td>TTS batch por escena/diálogo + mux final</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>No genera video final, solo imágenes</td>
+  <td>Pipeline completo: images → transition clips → scene video → final mux</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>Sin control de estado (pending/generated/failed)</td>
+  <td>ShotStatus enum + tracking por shot/escena</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>supportingImages vacíos, sin versionado</td>
+  <td>image_url en assets + imageHistory por shot</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td>motionDescription texto libre</td>
+  <td>Camera enum (pan_left, zoom_in, static, 360_track...) + prompt builder</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td>Sin metadatos de render</td>
+  <td>RenderConfig con fps, resolution, duration, outputPath</td>
+</tr>
+</table>
+
+<h2>🛠️ Stack técnico V1</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+  <span class="tag">Python 3.11</span>
+  <span class="tag">Pydantic v2</span>
+  <span class="tag">Click CLI</span>
+  <span class="tag">FAL.ai</span>
+  <span class="tag">Pollinations.ai</span>
+  <span class="tag">OpenRouter</span>
+  <span class="tag">Edge TTS</span>
+  <span class="tag">FFmpeg</span>
+  <span class="tag">Pillow</span>
+  <span class="tag">httpx</span>
+</div>
+
+</body>
+</html>
