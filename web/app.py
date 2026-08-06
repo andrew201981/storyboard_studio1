@@ -1040,9 +1040,70 @@ def _generate_shot_image(shot_id: str, shot: object, style: str, assets: list | 
     out_dir = OUTPUT_DIR / "_asset_images"
     out_dir.mkdir(parents=True, exist_ok=True)
     dest = out_dir / f"{shot_id}.png"
+
+    asset_image_url = _pick_asset_image_url(assets, asset_refs)
+    if asset_image_url:
+        try:
+            from backends.kie_image import generate_from_image
+            safe_prompt = _safe_img2img_prompt(shot_prompt)
+            kie_path = generate_from_image(safe_prompt, image_url=asset_image_url, output_dir=out_dir, dest=dest)
+            if kie_path:
+                return f"/static/asset_images/{shot_id}.png"
+        except Exception:
+            pass
+
     image_path = generate_from_prompt(shot_prompt, "16:9", output_dir=out_dir, dest=dest)
     if image_path:
         return f"/static/asset_images/{shot_id}.png"
+    return None
+
+
+def _safe_img2img_prompt(prompt: str) -> str:
+    blocked = [
+        "gore",
+        "blood",
+        "violence",
+        "nsfw",
+        "nude",
+        "naked",
+        "sexual",
+        "erotic",
+        "weapon",
+        "gun",
+        "knife",
+        "kill",
+        "dead",
+        "corpse",
+        "terror",
+        "terrorist",
+        "abuse",
+        "racist",
+        "hate",
+        "drug",
+        "cocaine",
+        "heroin",
+        "meth",
+    ]
+    lowered = prompt.lower()
+    for term in blocked:
+        if term in lowered:
+            return "Cinematic scene, stylized characters, safe for all audiences, high detail, 16:9"
+    return prompt
+
+
+def _pick_asset_image_url(assets: list | None, asset_refs: list[str]) -> str | None:
+    if not assets or not asset_refs:
+        return None
+    ref_set = {name.lower() for name in asset_refs}
+    for asset in assets:
+        if isinstance(asset, dict):
+            asset_name = (asset.get("name") or "").strip()
+            image_url = asset.get("image_url") or ""
+        else:
+            asset_name = (getattr(asset, "name", "") or "").strip()
+            image_url = getattr(asset, "image_url", "") or ""
+        if asset_name.lower() in ref_set and image_url:
+            return image_url
     return None
 
 
