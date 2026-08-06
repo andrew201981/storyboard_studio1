@@ -974,7 +974,7 @@ def assets_autofill(project_id: str):
     return {"ok": True}
 
 
-def _generate_shot_image(shot_id: str, shot: object, style: str) -> str | None:
+def _generate_shot_image(shot_id: str, shot: object, style: str, assets: list | None = None) -> str | None:
     try:
         from backends.hf_image import generate_from_prompt
     except Exception:
@@ -989,7 +989,54 @@ def _generate_shot_image(shot_id: str, shot: object, style: str) -> str | None:
         title = getattr(shot, "title", "") or ""
         prompt = getattr(shot, "prompt", "") or ""
 
-    shot_prompt = f"{prompt or title}. Style: {style}. Cinematic storyboard frame, 16:9, high detail."
+    scene_text = f"{prompt or title}".lower()
+    asset_parts: list[str] = []
+    asset_refs: list[str] = []
+
+    if assets:
+        for asset in assets:
+            if isinstance(asset, dict):
+                asset_type = asset.get("type", "")
+                name = asset.get("name", "")
+                physical = asset.get("physical", "")
+                clothing = asset.get("clothing", "")
+                prompt_text = asset.get("prompt", "")
+                time_of_day = asset.get("time_of_day", "")
+            else:
+                asset_type = getattr(asset, "type", "")
+                name = getattr(asset, "name", "")
+                physical = getattr(asset, "physical", "")
+                clothing = getattr(asset, "clothing", "")
+                prompt_text = getattr(asset, "prompt", "")
+                time_of_day = getattr(asset, "time_of_day", "")
+
+            if not name:
+                continue
+
+            name_lower = name.lower()
+            mentioned = name_lower in scene_text
+            if asset_type == "character" and mentioned:
+                desc = " ".join(filter(None, [physical, clothing])).strip()
+                if desc:
+                    asset_parts.append(f"{name}: {desc}")
+                asset_refs.append(name)
+            elif asset_type == "location" and mentioned:
+                loc_desc = " ".join(filter(None, [prompt_text, time_of_day])).strip()
+                if loc_desc:
+                    asset_parts.append(f"{name}: {loc_desc}")
+                asset_refs.append(name)
+            elif asset_type == "prop" and mentioned:
+                asset_parts.append(f"{name}: {prompt_text}")
+                asset_refs.append(name)
+
+    asset_context = "; ".join(asset_parts)
+    shot_prompt = (
+        f"{prompt or title}. "
+        f"Style: {style}. Cinematic storyboard frame, 16:9, high detail."
+    )
+    if asset_context:
+        shot_prompt = f"{shot_prompt} Reference assets: {asset_context}."
+
     out_dir = OUTPUT_DIR / "_asset_images"
     out_dir.mkdir(parents=True, exist_ok=True)
     dest = out_dir / f"{shot_id}.png"
@@ -1185,12 +1232,13 @@ def shot_generate(project_id: str, shot_id: str):
         return redirect(url_for("welcome"))
 
     project = validate_dict(json.loads(project_path.read_text(encoding="utf-8")))
+    assets = list(project.assets)
     updated = False
     for scene in project.storyboard.get("scenes", []):
         for shot in scene.get("shots", []):
             if shot.get("id") == shot_id:
                 shot["status"] = ShotStatus.image_generated.value
-                shot["image_url"] = _generate_shot_image(shot_id, shot, project.globalStyle)
+                shot["image_url"] = _generate_shot_image(shot_id, shot, project.globalStyle, assets=assets)
                 updated = True
                 break
         if updated:
