@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from flask import Flask, redirect, render_template_string, request, url_for
+from flask import Flask, redirect, render_template_string, request, url_for, make_response
 import sys
 from pathlib import Path
 
@@ -307,8 +307,6 @@ STORYBOARD_TEMPLATE = """<!DOCTYPE html>
     color: #c9d1d9;
     font-family: 'Segoe UI', system-ui, sans-serif;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
   }
   header {
     display: flex;
@@ -317,71 +315,110 @@ STORYBOARD_TEMPLATE = """<!DOCTYPE html>
     padding: 16px 24px;
     border-bottom: 1px solid #21262d;
   }
-  header h1 { font-size: 16px; color: #c9d1d9; }
+  header h1 { font-size: 16px; }
   header .meta { color: #8b949e; font-size: 12px; }
   header .meta a { color: #58a6ff; text-decoration: none; margin: 0 6px; }
-  .content { padding: 24px; overflow: auto; }
-  .scene-block {
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+    padding: 20px;
+    height: calc(100vh - 65px);
+  }
+  .shot-list {
     background: #161b22;
     border: 1px solid #30363d;
     border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 20px;
+    overflow: auto;
   }
-  .scene-header {
+  .shot-list-header {
+    padding: 12px;
+    border-bottom: 1px solid #21262d;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
   }
-  .scene-header h2 { font-size: 14px; }
-  .shots {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
+  .shot-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid #21262d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
-  .shot-card {
-    background: #0d1117;
-    border: 1px solid #30363d;
-    border-radius: 10px;
-    padding: 10px;
-  }
-  .shot-media {
-    width: 100%;
-    aspect-ratio: 16 / 9;
+  .shot-item:hover { background: #1c2129; }
+  .shot-item.active { background: #0d1117; border-left: 3px solid #1f6feb; }
+  .shot-thumb {
+    width: 72px;
+    aspect-ratio: 16/9;
     background: #010409;
     border-radius: 8px;
-    margin-bottom: 8px;
     overflow: hidden;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #484f58;
-    font-size: 11px;
+    font-size: 10px;
   }
-  .shot-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .shot-title { font-size: 13px; font-weight: 600; }
+  .shot-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .shot-info { min-width: 0; }
+  .shot-name { font-size: 13px; font-weight: 600; }
   .shot-meta { color: #8b949e; font-size: 11px; margin-top: 4px; }
-  .shot-actions { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .detail {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+    overflow: auto;
+  }
+  .detail img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #010409;
+    border: 1px solid #30363d;
+    margin-bottom: 14px;
+    display: block;
+  }
+  .detail h2 { font-size: 16px; margin-bottom: 8px; }
+  .detail .label { color: #8b949e; font-size: 12px; margin-top: 12px; }
+  .detail .value { font-size: 13px; margin-top: 4px; word-break: break-word; }
+  .detail .assets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .pill {
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
   .btn {
     background: #161b22;
     color: #c9d1d9;
     border: 1px solid #30363d;
     border-radius: 999px;
-    padding: 5px 10px;
-    font-size: 11px;
+    padding: 8px 12px;
+    font-size: 12px;
     cursor: pointer;
+    margin-top: 14px;
+    margin-right: 8px;
   }
   .btn.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
-  .empty { color: #484f58; font-size: 12px; }
   .status {
-    padding: 12px 24px;
-    border-top: 1px solid #21262d;
-    color: #8b949e;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-top: 12px;
     font-size: 12px;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    color: #8b949e;
+    white-space: pre-wrap;
   }
   .status .ok { color: #3fb950; }
   .status .err { color: #ff7b72; }
+  .empty { color: #484f58; font-size: 12px; padding: 16px; }
 </style>
 </head>
 <body>
@@ -393,64 +430,76 @@ STORYBOARD_TEMPLATE = """<!DOCTYPE html>
     </div>
   </header>
 
-  <form class="content" method="post" action="/storyboard/{{ project_id }}" enctype="multipart/form-data">
-    <div class="section">
-      <div class="section-header">
-        <h2>Storyboard</h2>
-        <div>
-          <button type="button" class="btn primary" onclick="generateStoryboard()">Generate Storyboard</button>
-        </div>
+  <div class="layout">
+    <div class="shot-list">
+      <div class="shot-list-header">
+        <strong>Shots</strong>
+        <button type="button" class="btn primary" onclick="generateStoryboard()">Generate Storyboard</button>
       </div>
-      <div id="storyboard-container">
-        {% for scene in storyboard.scenes %}
-        <div class="scene-block">
-          <div class="scene-header">
-            <h2>{{ scene.sceneNumber }} — {{ scene.sceneTitle }}</h2>
-            <span class="pill">{{ scene.shots|length }} shots</span>
-          </div>
-          <div class="shots">
-            {% for shot in scene.shots %}
-            <div class="shot-card">
-              <div class="shot-media">
-                {% if shot.image_url %}
-                  <img src="{{ shot.image_url }}" alt="Shot {{ shot.shotNumber }}">
-                {% else %}
-                  <span>No image</span>
-                {% endif %}
-              </div>
-              <div class="shot-title">{{ shot.shotNumber }}. {{ shot.title }}</div>
-              <div class="shot-meta">{{ shot.camera }} · {{ shot.status }}</div>
-              <div class="shot-meta">{{ shot.prompt[:120] }}</div>
-              <div class="shot-actions">
-                <button type="button" class="btn primary" onclick="generateShot('{{ scene.sceneId }}', '{{ shot.id }}')">Generate Image</button>
-              </div>
-            </div>
-            {% endfor %}
-            {% if not scene.shots %}
-              <div class="empty">No shots yet. Click Generate Storyboard.</div>
+      {% for scene in storyboard.scenes %}
+        {% for shot in scene.shots %}
+        <div class="shot-item {% if selected_shot_id == shot.id %}active{% endif %}" onclick="selectShot('{{ shot.id }}')">
+          <div class="shot-thumb">
+            {% if shot.image_url %}
+              <img src="{{ shot.image_url }}" alt="Shot {{ shot.shotNumber }}">
+            {% else %}
+              <span>No image</span>
             {% endif %}
+          </div>
+          <div class="shot-info">
+            <div class="shot-name">{{ shot.shotNumber }}. {{ shot.title }}</div>
+            <div class="shot-meta">{{ shot.camera }} · {{ shot.status }}</div>
           </div>
         </div>
         {% endfor %}
-        {% if not storyboard.scenes %}
-          <div class="empty">No storyboard yet. Click Generate Storyboard to create shots from script scenes.</div>
-        {% endif %}
-      </div>
+      {% endfor %}
+      {% if not storyboard.scenes %}
+        <div class="empty">No shots yet. Click Generate Storyboard.</div>
+      {% endif %}
     </div>
 
-    <div class="status">
-      {% if saved %}
-        <span class="ok">✅ Guardado: {{ saved }}</span>
+    <div class="detail">
+      {% if selected_shot %}
+        {% set ref_assets = [] %}
+        {% for a in project.assets %}
+          {% if a.name.lower() in (selected_shot.prompt or selected_shot.title or '')|lower %}
+            {% set _ = ref_assets.append(a) %}
+          {% endif %}
+        {% endfor %}
+        {% if selected_shot.image_url %}
+          <img src="{{ selected_shot.image_url }}" alt="Selected shot">
+        {% else %}
+          <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Empty shot">
+        {% endif %}
+        <h2>{{ selected_shot.shotNumber }}. {{ selected_shot.title }}</h2>
+        <div class="label">Prompt</div>
+        <div class="value">{{ selected_shot.prompt }}</div>
+        <div class="label">Camera</div>
+        <div class="value">{{ selected_shot.camera }}</div>
+        <div class="label">Status</div>
+        <div class="value">{{ selected_shot.status }}</div>
+        <div class="label">Assets used</div>
+        <div class="assets">
+          {% for a in ref_assets %}
+            <span class="pill">{{ a.name }}</span>
+          {% else %}
+            <span class="empty">No referenced assets detected in shot text.</span>
+          {% endfor %}
+        </div>
+        <button type="button" class="btn primary" onclick="generateSelectedShot()">Generate Image</button>
+        {% if last_shot_log %}
+          <div class="status">{{ last_shot_log }}</div>
+        {% endif %}
+      {% else %}
+        <div class="empty">Select a shot to view details.</div>
       {% endif %}
-      {% if error %}
-        <span class="err">❌ {{ error }}</span>
-      {% endif %}
-      &nbsp;
-      {{ storyboard.scenes|length }} scenes · {{ total_shots }} shots
     </div>
-  </form>
+  </div>
 
   <script>
+    function selectShot(shotId) {
+      window.location.href = '/storyboard/{{ project_id }}?shot=' + encodeURIComponent(shotId);
+    }
     async function generateStoryboard() {
       const res = await fetch('/storyboard/{{ project_id }}/generate', {
         method: 'POST',
@@ -462,17 +511,27 @@ STORYBOARD_TEMPLATE = """<!DOCTYPE html>
         alert('Failed to generate storyboard');
       }
     }
-
-    async function generateShot(sceneId, shotId) {
-      const res = await fetch('/storyboard/{{ project_id }}/shot/' + shotId + '/generate', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({sceneId}),
-      });
-      if (res.ok) {
-        window.location.reload();
-      } else {
-        alert('Failed to generate shot');
+    async function generateSelectedShot() {
+      const shotId = '{{ selected_shot.id if selected_shot else "" }}';
+      if (!shotId) return;
+      const btn = document.querySelector('.detail .btn.primary');
+      const originalText = btn ? btn.textContent : 'Generate Image';
+      if (btn) { btn.textContent = 'Generating...'; btn.disabled = true; }
+      try {
+        const res = await fetch('/storyboard/{{ project_id }}/shot/' + encodeURIComponent(shotId) + '/generate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.generated_url) {
+          const img = document.querySelector('.detail img');
+          if (img) { img.src = data.generated_url; }
+          window.location.reload();
+        } else {
+          alert('Failed to generate shot: ' + (data.generated_url === null ? 'backend returned no image' : res.status));
+        }
+      } finally {
+        if (btn) { btn.textContent = originalText; btn.disabled = false; }
       }
     }
   </script>
@@ -1044,13 +1103,20 @@ def _generate_shot_image(shot_id: str, shot: object, style: str, assets: list | 
     asset_image_url = _pick_asset_image_url(assets, asset_refs)
     if asset_image_url:
         try:
-            from backends.kie_image import generate_from_image
-            safe_prompt = _safe_img2img_prompt(shot_prompt)
-            kie_path = generate_from_image(safe_prompt, image_url=asset_image_url, output_dir=out_dir, dest=dest)
+            from backends.kling_image import generate_image_to_image
+            kie_path = generate_image_to_image(shot_prompt, image_url=asset_image_url, output_dir=out_dir, dest=dest)
             if kie_path:
                 return f"/static/asset_images/{shot_id}.png"
         except Exception:
             pass
+
+    try:
+        from backends.kling_image import generate_text_to_image
+        kling_path = generate_text_to_image(shot_prompt, "16:9", output_dir=out_dir, dest=dest)
+        if kling_path:
+            return f"/static/asset_images/{shot_id}.png"
+    except Exception:
+        pass
 
     image_path = generate_from_prompt(shot_prompt, "16:9", output_dir=out_dir, dest=dest)
     if image_path:
@@ -1128,7 +1194,7 @@ def _fake_asset_image(asset_id: str, name: str) -> str | None:
 
 def _atlas_asset_image(asset_id: str, asset: object, style: str) -> str | None:
     try:
-        from backends.hf_image import generate_from_prompt
+        from backends.kling_image import generate_text_to_image
     except Exception:
         return None
 
@@ -1170,9 +1236,19 @@ def _atlas_asset_image(asset_id: str, asset: object, style: str) -> str | None:
     out_dir = OUTPUT_DIR / "_asset_images"
     out_dir.mkdir(parents=True, exist_ok=True)
     dest = out_dir / f"{asset_id}.png"
-    image_path = generate_from_prompt(prompt, "16:9", output_dir=out_dir, dest=dest)
+    image_path = generate_text_to_image(prompt, "16:9", output_dir=out_dir, dest=dest)
     if image_path:
         return f"/static/asset_images/{asset_id}.png"
+
+    # Fallback to HF text-to-image if Kling fails
+    try:
+        from backends.hf_image import generate_from_prompt
+        image_path = generate_from_prompt(prompt, "16:9", output_dir=out_dir, dest=dest)
+        if image_path:
+            return f"/static/asset_images/{asset_id}.png"
+    except Exception:
+        pass
+
     return None
 
 
@@ -1207,6 +1283,7 @@ def storyboard_page(project_id: str):
     project = validate_dict(json.loads(project_path.read_text(encoding="utf-8")))
     saved = None
     error = None
+    last_shot_log = None
 
     if request.method == "POST":
         action = request.form.get("action", "")
@@ -1241,7 +1318,24 @@ def storyboard_page(project_id: str):
     scenes = storyboard.get("scenes", [])
     total_shots = sum(len(scene.get("shots", [])) for scene in scenes)
 
-    return render_template_string(
+    selected_shot = None
+    selected_shot_id = request.args.get("shot", "")
+    for scene in scenes:
+        for shot in scene.get("shots", []):
+            if selected_shot_id and shot.get("id") == selected_shot_id:
+                selected_shot = shot
+                break
+        if selected_shot:
+            break
+    if not selected_shot and scenes:
+        for scene in scenes:
+            if scene.get("shots"):
+                selected_shot = scene["shots"][0]
+                break
+
+    session_key = f"shot_log:{project_id}"
+    last_shot_log = request.cookies.get(session_key)
+    resp = make_response(render_template_string(
         STORYBOARD_TEMPLATE,
         project=project,
         project_id=project_id,
@@ -1249,7 +1343,12 @@ def storyboard_page(project_id: str):
         total_shots=total_shots,
         saved=saved,
         error=error,
-    )
+        selected_shot=selected_shot,
+        selected_shot_id=selected_shot.get("id") if selected_shot else "",
+        last_shot_log=last_shot_log,
+    ))
+    resp.delete_cookie(session_key)
+    return resp
 
 
 @app.route("/storyboard/<project_id>/generate", methods=["POST"])
@@ -1295,11 +1394,17 @@ def shot_generate(project_id: str, shot_id: str):
     project = validate_dict(json.loads(project_path.read_text(encoding="utf-8")))
     assets = list(project.assets)
     updated = False
+    generated_url = None
     for scene in project.storyboard.get("scenes", []):
         for shot in scene.get("shots", []):
             if shot.get("id") == shot_id:
-                shot["status"] = ShotStatus.image_generated.value
-                shot["image_url"] = _generate_shot_image(shot_id, shot, project.globalStyle, assets=assets)
+                generated_url = _generate_shot_image(shot_id, shot, project.globalStyle, assets=assets)
+                print(f"[shot_generate] shot_id={shot_id} generated_url={generated_url}")
+                if generated_url:
+                    shot["status"] = ShotStatus.image_generated.value
+                    shot["image_url"] = generated_url
+                else:
+                    shot["status"] = "pending"
                 updated = True
                 break
         if updated:
@@ -1307,7 +1412,7 @@ def shot_generate(project_id: str, shot_id: str):
 
     if updated:
         save_project(project, project_path)
-    return {"ok": updated}
+    return {"ok": updated, "generated_url": generated_url}
 
 
 if __name__ == "__main__":
